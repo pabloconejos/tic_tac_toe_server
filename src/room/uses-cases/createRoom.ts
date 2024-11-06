@@ -16,7 +16,6 @@ export const createRoom = async (player1_id: any) => {
       sql: query,
       args: [id, estadoInicial, 1, tablero, player1_id, jugador2_id],
     });
-    console.log(response);
     return {
       id,
       response,

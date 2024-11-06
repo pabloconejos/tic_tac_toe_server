@@ -47,8 +47,7 @@ export class RoomService {
     const { roomId } = payload;
     try {
       const response = await deleteRoom(roomId);
-      console.log('sala eliminada:', response);
-      return { succes: true, message: 'Sala eliminada' };
+      return { succes: true, message: 'Sala eliminada', response };
     } catch (error) {
       console.error('Error al cerrar la sala:', error);
     }

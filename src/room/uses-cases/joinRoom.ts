@@ -1,8 +1,6 @@
 import { client } from 'src/utils/createClient';
 
 export const joinRoom = async (roomId: string, player2_id: string) => {
-  console.log('Unión a sala', roomId, player2_id);
-
   const query = `
         UPDATE Rooms 
         SET jugador2_id = ? 
@@ -18,7 +16,6 @@ export const joinRoom = async (roomId: string, player2_id: string) => {
     if (response.rowsAffected === 0) {
       throw new Error('La sala ya tiene un segundo jugador.');
     }
-    console.log('Sala unida:', response);
 
     return roomId;
   } catch (error) {
