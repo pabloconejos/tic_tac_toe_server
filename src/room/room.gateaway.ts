@@ -1,5 +1,4 @@
 import { RoomService } from './room.service';
-import { error } from 'console';
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -10,7 +9,6 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { client } from '../utils/createClient';
 
 @WebSocketGateway()
 export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -18,18 +16,16 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(private readonly roomService: RoomService) {}
 
-  private roomPlayers: { [key: string]: string[] } = {}; // Para almacenar los jugadores en cada sala
+  private roomPlayers: { [key: string]: string[] } = {};
 
   handleConnection(client: any) {
-    const clientId = client.id; // ID único del cliente, proporcionado por el WebSocket
+    const clientId = client.id;
     console.log(`Cliente conectado: ${clientId}`);
 
     client.emit('connectionStatus', {
-      message: 'Bienvenido al servidor de Tic Tac Toe!',
       id: clientId,
     });
 
-    // 4. Emitir actualización del estado de la sala a otros jugadores si es necesario
     this.server.emit('playerConnected', { playerId: clientId });
   }
 
@@ -47,8 +43,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(newRoom.id); // le decimos al cliente que se ha unido a la sala con id newRoomId
     // Guarda el ID del cliente en la sala
     this.handlerSalasAndId(newRoom.id, client.id);
-    const rooms = await this.roomService.getAvailableRooms(); // devolvemos las salas disponibles a todo el mundo
-    this.server.emit('availableRooms', rooms);
+    this.sendUpdateRooms();
   }
 
   @SubscribeMessage('joinRoom')
@@ -63,7 +58,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.join(roomId); // le decimos al cliente que se ha unido a la sala con id newRoomId
     this.handlerSalasAndId(roomId, client.id);
-    // client.emit('joinedRoom', roomId); // le emitimos al cliente que se ha unido a una sala (ver si se puede quitar)
+    client.emit('joinedRoom', joinRoom); // le emitimos al cliente que se ha unido a una sala (ver si se puede quitar)
+
+    this.sendUpdateRooms();
 
     // Notifica a ambos jugadores que pueden comenzar el juego
     if (this.roomPlayers[roomId].length === 2) {
@@ -73,14 +70,6 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         roomInfo: joinRoom,
       });
     }
-  }
-
-  handlerSalasAndId(roomId, clientId) {
-    // Guarda el ID del cliente en la sala
-    if (!this.roomPlayers[roomId]) {
-      this.roomPlayers[roomId] = [];
-    }
-    this.roomPlayers[roomId].push(clientId); // añadimos el cliente al array de salas
   }
 
   @SubscribeMessage('closeRoom')
@@ -128,8 +117,39 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('startPlay')
+  async startPlay(@MessageBody() roomId: string) {
+    const response = await this.roomService.changeRoomState(roomId);
+
+    if (!response.success) {
+      return;
+    }
+
+    this.sendUpdateRooms();
+
+    this.server.to(roomId).emit('startPlay', {
+      roomId,
+      players: this.roomPlayers[roomId],
+      message: 'Partida empezada',
+    });
+  }
+
+  async sendUpdateRooms() {
+    const rooms = await this.roomService.getAvailableRooms(); // devolvemos las salas disponibles a todo el mundo
+    this.server.emit('availableRooms', rooms);
+  }
+
+  // TODO => PASARLAS A UTILS
   handleDisconnect(client: any) {
     const clientId = client.id; // ID único del cliente, proporcionado por el WebSocket
     console.log(`Cliente desconectado: ${clientId}`);
+  }
+
+  handlerSalasAndId(roomId, clientId) {
+    // Guarda el ID del cliente en la sala
+    if (!this.roomPlayers[roomId]) {
+      this.roomPlayers[roomId] = [];
+    }
+    this.roomPlayers[roomId].push(clientId); // añadimos el cliente al array de salas
   }
 }

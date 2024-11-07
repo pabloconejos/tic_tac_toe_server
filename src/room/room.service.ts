@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { getAvailableRooms } from './uses-cases/getAvaliableRooms';
-import { createRoom } from './uses-cases/createRoom';
-import { joinRoom } from './uses-cases/joinRoom';
-import { getOneRoom } from './uses-cases/getOneRoom';
-import { deleteRoom } from './uses-cases/deleteRoom';
+import {
+  changeRoomState,
+  getAvailableRooms,
+  createRoom,
+  joinRoom,
+  getOneRoom,
+  deleteRoom,
+} from './uses-cases/index';
 
 @Injectable()
 export class RoomService {
@@ -50,6 +53,18 @@ export class RoomService {
       return { succes: true, message: 'Sala eliminada', response };
     } catch (error) {
       console.error('Error al cerrar la sala:', error);
+    }
+  }
+
+  async changeRoomState(roomId: string) {
+    try {
+      await changeRoomState(roomId);
+      return { success: true };
+    } catch (error) {
+      console.error('Error al cambiar el estado de la sala:', error.message);
+
+      // Devolver un mensaje de error personalizado al cliente
+      throw new Error('No se pudo cambiar el estado de la sala');
     }
   }
 

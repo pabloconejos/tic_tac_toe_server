@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { client } from 'src/utils/createClient';
 
-export const createRoom = async (player1_id: any) => {
+export const createRoom = async (player1_id: string) => {
   const query = `
     INSERT INTO Rooms (id, estado, turno, tablero, jugador1_id, jugador2_id)
     VALUES (? ,?, ?, ?, ?, ?)
