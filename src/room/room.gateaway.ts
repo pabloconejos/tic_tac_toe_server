@@ -83,33 +83,49 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.roomPlayers[roomId].push(clientId); // añadimos el cliente al array de salas
   }
 
-  // @SubscribeMessage('joinRoom')
-  // async handleJoinRoom(
-  //   client: any,
-  //   payload: { roomId: string; player2_id: string },
-  // ) {
-  //   try {
-  //     const joinRoom = await this.roomService.joinRoom(payload);
-  //     client.emit('roomJoinedInfo', joinRoom);
-
-  //     const rooms = await this.roomService.getAvailableRooms();
-  //     this.server.emit('availableRooms', rooms);
-  //   } catch (error) {
-  //     console.error('Error en handleJoinRoom:', error.message);
-  //     // Emitir error al cliente
-  //     client.emit('roomJoinedInfo', { success: false, message: error.message });
-  //   }
-  // }
-
   @SubscribeMessage('closeRoom')
-  async closeRoom(client: any, payload: { roomId: string }) {
-    const closeRoom = await this.roomService.closeRoom(payload);
+  async handleLeaveRoom(
+    @MessageBody() roomId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      // Obtiene todos los jugadores en la sala
+      const playersInRoom = this.roomPlayers[roomId];
 
-    if (!closeRoom.succes) {
-      throw new error();
+      // Si la sala tiene jugadores, se sale a todos
+      if (playersInRoom) {
+        playersInRoom.forEach((playerId) => {
+          const player = this.server.sockets.sockets.get(playerId);
+          if (player) {
+            player.leave(roomId);
+            // player.emit('roomClosed', { roomId });
+          }
+        });
+
+        // Elimina la sala de los registros
+        delete this.roomPlayers[roomId];
+
+        // Cierra la sala en la base de datos o en el servicio correspondiente
+        const closeRoom = await this.roomService.closeRoom({ roomId });
+
+        if (!closeRoom.succes) {
+          throw new Error('Error al cerrar la sala.');
+        }
+
+        // Obtiene las salas disponibles después de cerrar la sala
+        const rooms = await this.roomService.getAvailableRooms();
+        this.server.emit('availableRooms', rooms);
+        console.log('roomPlayers => ', this.roomPlayers);
+      } else {
+        console.log('No hay jugadores en la sala o la sala no existe');
+      }
+    } catch (error) {
+      console.error('Error al cerrar la sala:', error);
+      // Aquí puedes emitir un error al cliente si lo deseas
+      client.emit('errorClosingRoom', {
+        message: 'No se pudo cerrar la sala correctamente',
+      });
     }
-    const rooms = await this.roomService.getAvailableRooms();
-    this.server.emit('availableRooms', rooms); // Emitir la lista actualizada de salas
   }
 
   handleDisconnect(client: any) {
