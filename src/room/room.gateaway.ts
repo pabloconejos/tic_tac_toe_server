@@ -1,18 +1,24 @@
+import { RoomService } from './room.service';
+import { error } from 'console';
 import {
   WebSocketGateway,
-  WebSocketServer,
   SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { RoomService } from './room.service';
-import { error } from 'console';
+import { Socket } from 'socket.io';
+import { client } from '../utils/createClient';
 
 @WebSocketGateway()
 export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server;
 
   constructor(private readonly roomService: RoomService) {}
+
+  private roomPlayers: { [key: string]: string[] } = {}; // Para almacenar los jugadores en cada sala
 
   handleConnection(client: any) {
     const clientId = client.id; // ID único del cliente, proporcionado por el WebSocket
@@ -34,39 +40,66 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('createRoom')
-  async handleCreateRoom(client: any, payload: { player1_id: string }) {
-    // Lógica para crear una nueva sala usando el servicio
-    const newRoom = await this.roomService.createRoom(payload.player1_id);
+  async handleCreateRoom(client: any) {
+    const newRoom = await this.roomService.createRoom(client.id); // crear room en la bd
+    client.emit('roomCreatedForYou', newRoom); // le notificamos al jugador que crear la sala que se ha creado
 
-    // TODO => MIRAR SI ES MAS OPTIMO VOLVER A MANDAR TODAS LAS SALAS O ENVIAR SOLO LA NUEVA
-    // Emitir la nueva sala a todos los clientes conectados
-    // this.server.emit('roomCreated', newRoom);
-
-    // Emitir el ID de la nueva sala solo al cliente que la creó
-    client.emit('roomCreatedForYou', newRoom);
-
-    // También puedes llamar a `getAvailableRooms` para actualizar la lista de salas
-    const rooms = await this.roomService.getAvailableRooms();
-    this.server.emit('availableRooms', rooms); // Emitir la lista actualizada de salas
+    client.join(newRoom.id); // le decimos al cliente que se ha unido a la sala con id newRoomId
+    // Guarda el ID del cliente en la sala
+    this.handlerSalasAndId(newRoom.id, client.id);
+    const rooms = await this.roomService.getAvailableRooms(); // devolvemos las salas disponibles a todo el mundo
+    this.server.emit('availableRooms', rooms);
   }
 
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
-    client: any,
-    payload: { roomId: string; player2_id: string },
+    @MessageBody() roomId: any,
+    @ConnectedSocket() client: Socket,
   ) {
-    try {
-      const joinRoom = await this.roomService.joinRoom(payload);
-      client.emit('roomJoinedInfo', joinRoom);
+    const joinRoom = await this.roomService.joinRoom({
+      roomId: roomId,
+      player2_id: client.id,
+    });
 
-      const rooms = await this.roomService.getAvailableRooms();
-      this.server.emit('availableRooms', rooms);
-    } catch (error) {
-      console.error('Error en handleJoinRoom:', error.message);
-      // Emitir error al cliente
-      client.emit('roomJoinedInfo', { success: false, message: error.message });
+    client.join(roomId); // le decimos al cliente que se ha unido a la sala con id newRoomId
+    this.handlerSalasAndId(roomId, client.id);
+    // client.emit('joinedRoom', roomId); // le emitimos al cliente que se ha unido a una sala (ver si se puede quitar)
+
+    // Notifica a ambos jugadores que pueden comenzar el juego
+    if (this.roomPlayers[roomId].length === 2) {
+      this.server.to(roomId).emit('readyToStart', {
+        roomId,
+        players: this.roomPlayers[roomId],
+        roomInfo: joinRoom,
+      });
     }
   }
+
+  handlerSalasAndId(roomId, clientId) {
+    // Guarda el ID del cliente en la sala
+    if (!this.roomPlayers[roomId]) {
+      this.roomPlayers[roomId] = [];
+    }
+    this.roomPlayers[roomId].push(clientId); // añadimos el cliente al array de salas
+  }
+
+  // @SubscribeMessage('joinRoom')
+  // async handleJoinRoom(
+  //   client: any,
+  //   payload: { roomId: string; player2_id: string },
+  // ) {
+  //   try {
+  //     const joinRoom = await this.roomService.joinRoom(payload);
+  //     client.emit('roomJoinedInfo', joinRoom);
+
+  //     const rooms = await this.roomService.getAvailableRooms();
+  //     this.server.emit('availableRooms', rooms);
+  //   } catch (error) {
+  //     console.error('Error en handleJoinRoom:', error.message);
+  //     // Emitir error al cliente
+  //     client.emit('roomJoinedInfo', { success: false, message: error.message });
+  //   }
+  // }
 
   @SubscribeMessage('closeRoom')
   async closeRoom(client: any, payload: { roomId: string }) {
