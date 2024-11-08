@@ -1,16 +1,19 @@
 import { client } from 'src/utils/createClient';
 
-export const changeRoomState = async (roomId: string) => {
+export const changeTurn = async (roomId: string) => {
   const query = `
-        UPDATE Rooms 
-        SET state = ? 
-        WHERE id = ?
+    UPDATE Rooms
+    SET turn = CASE 
+                WHEN turn = 'X' THEN 'O' 
+                WHEN turn = 'O' THEN 'X' 
+            END
+    WHERE id = ?;
     `;
 
   try {
     const response = await client.execute({
       sql: query,
-      args: ['in_progress', roomId],
+      args: [roomId],
     });
 
     if (response.rowsAffected === 0) {

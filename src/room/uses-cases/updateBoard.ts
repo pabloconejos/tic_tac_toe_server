@@ -1,23 +1,24 @@
 import { client } from 'src/utils/createClient';
 
-export const changeRoomState = async (roomId: string) => {
+export const updateBoard = async (board: string[], roomId: string) => {
+  console.log(board);
   const query = `
         UPDATE Rooms 
-        SET state = ? 
+        SET board = ? 
         WHERE id = ?
     `;
 
   try {
     const response = await client.execute({
       sql: query,
-      args: ['in_progress', roomId],
-    });
+      args: [board.toString(), roomId],
+    }); // todo => ver porque se guarda asi el array ,,,,,1,,1,,,
 
     if (response.rowsAffected === 0) {
       throw new Error('Ha ocurrido un error');
     }
 
-    return roomId;
+    return { succes: true };
   } catch (error) {
     console.error('Error en la base de datos:', error.message);
     throw new Error('Error al procesar la solicitud en la base de datos.');

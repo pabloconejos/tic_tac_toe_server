@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { updateBoard } from './uses-cases/updateBoard';
 import {
   changeRoomState,
   getAvailableRooms,
@@ -7,6 +8,7 @@ import {
   getOneRoom,
   deleteRoom,
 } from './uses-cases/index';
+import { changeTurn } from './uses-cases/changeTurn';
 
 @Injectable()
 export class RoomService {
@@ -62,7 +64,23 @@ export class RoomService {
       return { success: true };
     } catch (error) {
       console.error('Error al cambiar el estado de la sala:', error.message);
+      // Devolver un mensaje de error personalizado al cliente
+      throw new Error('No se pudo cambiar el estado de la sala');
+    }
+  }
 
+  async updateBoard(board: string[], roomId: string) {
+    try {
+      const response = await updateBoard(board, roomId);
+      if (!response.succes) {
+        throw new Error('No se pudo cambiar el estado del tablero');
+      }
+
+      const room = await changeTurn(roomId);
+
+      return getOneRoom(room);
+    } catch (error) {
+      console.error('Error al cambiar el estado de la sala:', error.message);
       // Devolver un mensaje de error personalizado al cliente
       throw new Error('No se pudo cambiar el estado de la sala');
     }
@@ -70,6 +88,11 @@ export class RoomService {
 
   async getOneRoom(roomId: string) {
     const room = await getOneRoom(roomId);
+
+    // Convertir el valor 'board' que está almacenado como cadena a un array
+    if (typeof room[0].board === 'string') {
+      room[0].board = JSON.parse(room[0].board); // Convertir de string a array
+    }
     return room[0];
   }
 }

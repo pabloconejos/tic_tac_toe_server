@@ -20,7 +20,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: any) {
     const clientId = client.id;
-    console.log(`Cliente conectado: ${clientId}`);
+    // console.log(`Cliente conectado: ${clientId}`);
 
     client.emit('connectionStatus', {
       id: clientId,
@@ -40,6 +40,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const newRoom = await this.roomService.createRoom(client.id); // crear room en la bd
     client.emit('roomCreatedForYou', newRoom); // le notificamos al jugador que crear la sala que se ha creado
 
+    // TODO => QUE SOLO PUEDA ESTAR UNIDO A UNA SALA
     client.join(newRoom.id); // le decimos al cliente que se ha unido a la sala con id newRoomId
     // Guarda el ID del cliente en la sala
     this.handlerSalasAndId(newRoom.id, client.id);
@@ -104,7 +105,6 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Obtiene las salas disponibles después de cerrar la sala
         const rooms = await this.roomService.getAvailableRooms();
         this.server.emit('availableRooms', rooms);
-        console.log('roomPlayers => ', this.roomPlayers);
       } else {
         console.log('No hay jugadores en la sala o la sala no existe');
       }
@@ -127,11 +127,20 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.sendUpdateRooms();
 
-    this.server.to(roomId).emit('startPlay', {
-      roomId,
-      players: this.roomPlayers[roomId],
-      message: 'Partida empezada',
-    });
+    const room = await this.roomService.getOneRoom(roomId);
+    this.server.to(roomId).emit('startPlay', room);
+  }
+
+  @SubscribeMessage('updateBoard')
+  async updateBoard(
+    @MessageBody() boardInfo: { board: string[] },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const roomId = Array.from(client.rooms).find((room) => room !== client.id);
+
+    const room = await this.roomService.updateBoard(boardInfo.board, roomId);
+
+    this.server.to(roomId).emit('updateBoard', room[0]);
   }
 
   async sendUpdateRooms() {

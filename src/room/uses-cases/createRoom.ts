@@ -3,7 +3,7 @@ import { client } from 'src/utils/createClient';
 
 export const createRoom = async (player1_id: string) => {
   const query = `
-    INSERT INTO Rooms (id, estado, turno, tablero, jugador1_id, jugador2_id)
+    INSERT INTO Rooms (id, state, turn, board, jugador1_id, jugador2_id)
     VALUES (? ,?, ?, ?, ?, ?)
   `;
 
@@ -14,7 +14,7 @@ export const createRoom = async (player1_id: string) => {
   try {
     const response = await client.execute({
       sql: query,
-      args: [id, estadoInicial, 1, tablero, player1_id, jugador2_id],
+      args: [id, estadoInicial, 'X', tablero, player1_id, jugador2_id],
     });
     return {
       id,
