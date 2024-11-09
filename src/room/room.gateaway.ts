@@ -104,7 +104,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
           const player = this.server.sockets.sockets.get(playerId);
           if (player) {
             player.leave(roomId);
-            // player.emit('roomClosed', { roomId });
+            player.emit('roomClosed', { roomId });
           }
         });
 
