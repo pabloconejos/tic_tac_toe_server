@@ -13,6 +13,7 @@ export const deleteRoom = async (roomId: string) => {
     const { rows } = response;
     return rows;
   } catch (error) {
+    console.error('Error al eliminar la sala', error);
     throw new Error('Error al eliminar la sala en la base de datos');
   }
 };

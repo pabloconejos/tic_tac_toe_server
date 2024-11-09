@@ -9,6 +9,9 @@ import {
   deleteRoom,
 } from './uses-cases/index';
 import { changeTurn } from './uses-cases/changeTurn';
+import { checkWinner } from 'src/utils/checkWinner';
+import { IRoom } from './dto/Room';
+import { setWinner } from './uses-cases/setWinner';
 
 @Injectable()
 export class RoomService {
@@ -17,8 +20,8 @@ export class RoomService {
       const rooms = await getAvailableRooms();
       return rooms;
     } catch (error) {
-      console.error('Error al obtener las salas:', error);
-      throw error; // Vuelve a lanzar el error para manejarlo más arriba si es necesario
+      console.error('Error al obtener las salas:', error.message);
+      throw new Error('No se pudieron obtener las salas disponibles');
     }
   }
 
@@ -27,8 +30,8 @@ export class RoomService {
       const room = await createRoom(playerId);
       return room;
     } catch (error) {
-      console.error('Error al obtener las salas:', error);
-      throw error; // Vuelve a lanzar el error para manejarlo más arriba si es necesario
+      console.error('Error al crear la sala:', error.message);
+      throw error; // Re-lanzamos el error para que el controlador lo maneje
     }
   }
 
@@ -40,10 +43,8 @@ export class RoomService {
       return this.getOneRoom(response);
     } catch (error) {
       console.error('Error al unirse a la sala:', error.message);
-
-      // Devolver un mensaje de error personalizado al cliente
       throw new Error(
-        'No se pudo unir a la sala. Asegúrate de que la sala esté disponible y que el jugador 2 no esté ya asignado.',
+        'No se pudo unir a la sala. Asegúrate de que la sala esté disponible.',
       );
     }
   }
@@ -55,6 +56,7 @@ export class RoomService {
       return { succes: true, message: 'Sala eliminada', response };
     } catch (error) {
       console.error('Error al cerrar la sala:', error);
+      throw new Error('No se pudo cerrar la sala.');
     }
   }
 
@@ -69,25 +71,27 @@ export class RoomService {
     }
   }
 
-  async updateBoard(board: string[], roomId: string) {
+  async updateBoard(room: IRoom) {
     try {
-      const response = await updateBoard(board, roomId);
+      const response = await updateBoard(room.board, room.id);
+      if (checkWinner(room.board, room.turn)) {
+        await setWinner(room.turn, room.id);
+      }
       if (!response.succes) {
         throw new Error('No se pudo cambiar el estado del tablero');
       }
 
-      const room = await changeTurn(roomId);
-      return getOneRoom(room);
+      const updatedRoom = await changeTurn(room.id);
+      return getOneRoom(updatedRoom);
     } catch (error) {
       console.error('Error al cambiar el estado de la sala:', error.message);
       // Devolver un mensaje de error personalizado al cliente
-      throw new Error('No se pudo cambiar el estado de la sala');
+      throw new Error('No se pudo cambiar el estado del tablero');
     }
   }
 
   async getOneRoom(roomId: string) {
     const room = await getOneRoom(roomId);
-    console.log('room => ', room);
     return room;
   }
 }

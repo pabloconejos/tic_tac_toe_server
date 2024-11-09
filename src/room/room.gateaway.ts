@@ -9,6 +9,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
+import { IRoom } from './dto/Room';
 
 @WebSocketGateway()
 export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -31,20 +32,31 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('getAvailableRooms')
   async handleGetAvailableRooms(client: any) {
-    const rooms = await this.roomService.getAvailableRooms();
-    client.emit('availableRooms', rooms);
+    try {
+      const rooms = await this.roomService.getAvailableRooms();
+      client.emit('availableRooms', rooms);
+    } catch (error) {
+      console.error('Error al enviar salas al cliente:', error.message);
+      client.emit('error', {
+        message:
+          'Error al obtener las salas disponibles. Por favor, inténtalo más tarde.',
+      });
+    }
   }
 
   @SubscribeMessage('createRoom')
   async handleCreateRoom(client: any) {
-    const newRoom = await this.roomService.createRoom(client.id); // crear room en la bd
-    client.emit('roomCreatedForYou', newRoom); // le notificamos al jugador que crear la sala que se ha creado
-
-    // TODO => QUE SOLO PUEDA ESTAR UNIDO A UNA SALA
-    client.join(newRoom.id); // le decimos al cliente que se ha unido a la sala con id newRoomId
-    // Guarda el ID del cliente en la sala
-    this.handlerSalasAndId(newRoom.id, client.id);
-    this.sendUpdateRooms();
+    try {
+      const newRoom = await this.roomService.createRoom(client.id);
+      // TODO => QUE SOLO PUEDA ESTAR UNIDO A UNA SALA
+      client.join(newRoom.id);
+      this.handlerSalasAndId(newRoom.id, client.id);
+      client.emit('roomCreatedForYou', newRoom);
+      this.sendUpdateRooms();
+    } catch (error) {
+      console.error('Error al crear la sala:', error.message);
+      client.emit('error', { message: error.message });
+    }
   }
 
   @SubscribeMessage('joinRoom')
@@ -52,24 +64,28 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() roomId: any,
     @ConnectedSocket() client: Socket,
   ) {
-    const joinRoom = await this.roomService.joinRoom({
-      roomId: roomId,
-      player2_id: client.id,
-    });
-
-    client.join(roomId); // le decimos al cliente que se ha unido a la sala con id newRoomId
-    this.handlerSalasAndId(roomId, client.id);
-    client.emit('joinedRoom', joinRoom); // le emitimos al cliente que se ha unido a una sala (ver si se puede quitar)
-
-    this.sendUpdateRooms();
-
-    // Notifica a ambos jugadores que pueden comenzar el juego
-    if (this.roomPlayers[roomId].length === 2) {
-      this.server.to(roomId).emit('readyToStart', {
-        roomId,
-        players: this.roomPlayers[roomId],
-        roomInfo: joinRoom,
+    try {
+      const joinRoom = await this.roomService.joinRoom({
+        roomId: roomId,
+        player2_id: client.id,
       });
+
+      client.join(roomId);
+      this.handlerSalasAndId(roomId, client.id);
+      client.emit('joinedRoom', joinRoom);
+      this.sendUpdateRooms();
+
+      // Notifica a ambos jugadores que pueden comenzar el juego
+      if (this.roomPlayers[roomId].length === 2) {
+        this.server.to(roomId).emit('readyToStart', {
+          roomId,
+          players: this.roomPlayers[roomId],
+          roomInfo: joinRoom,
+        });
+      }
+    } catch (error) {
+      console.error('Error al unirse a la sala:', error.message);
+      client.emit('error', { message: error.message });
     }
   }
 
@@ -111,13 +127,13 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       console.error('Error al cerrar la sala:', error);
       // Aquí puedes emitir un error al cliente si lo deseas
-      client.emit('errorClosingRoom', {
+      client.emit('error', {
         message: 'No se pudo cerrar la sala correctamente',
       });
     }
   }
 
-  @SubscribeMessage('startPlay')
+  @SubscribeMessage('startPlay') // TODO => CONTROL DE ERRORES 
   async startPlay(@MessageBody() roomId: string) {
     const response = await this.roomService.changeRoomState(roomId);
 
@@ -132,15 +148,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('updateBoard')
-  async updateBoard(
-    @MessageBody() boardInfo: { board: string[] },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const roomId = Array.from(client.rooms).find((room) => room !== client.id);
-
-    const room = await this.roomService.updateBoard(boardInfo.board, roomId);
-
-    this.server.to(roomId).emit('updateBoard', room);
+  async updateBoard(@MessageBody() roomInfo: IRoom) {
+    const room = await this.roomService.updateBoard(roomInfo);
+    this.server.to(room.id).emit('updateBoard', room);
   }
 
   async sendUpdateRooms() {

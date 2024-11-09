@@ -10,7 +10,7 @@ export const getAvailableRooms = async () => {
     const { rows } = response;
     return rows;
   } catch (error) {
-    console.error(error);
-    throw new Error('Error conectar con la bd');
+    console.error('Error en la consulta de salas:', error);
+    throw new Error('Error al conectar con la base de datos');
   }
 };

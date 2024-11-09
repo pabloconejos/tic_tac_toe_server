@@ -21,6 +21,7 @@ export const createRoom = async (player1_id: string) => {
       response,
     }; // Devuelve la respuesta del cliente
   } catch (error) {
+    console.error('Error al crear la sala', error);
     throw new Error('Error al crear la sala en la base de datos');
   }
 };
