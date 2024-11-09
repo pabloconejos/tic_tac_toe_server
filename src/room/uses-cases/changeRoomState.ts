@@ -17,7 +17,7 @@ export const changeRoomState = async (roomId: string) => {
       throw new Error('Ha ocurrido un error');
     }
 
-    return roomId;
+    return { success: true };
   } catch (error) {
     console.error('Error en la base de datos:', error.message);
     throw new Error('Error al procesar la solicitud en la base de datos.');

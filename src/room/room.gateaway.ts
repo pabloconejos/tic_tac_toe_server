@@ -21,13 +21,13 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: any) {
     const clientId = client.id;
-    // console.log(`Cliente conectado: ${clientId}`);
-
-    client.emit('connectionStatus', {
-      id: clientId,
-    });
-
+    client.emit('connectionStatus', { id: clientId });
     this.server.emit('playerConnected', { playerId: clientId });
+  }
+
+  handleDisconnect(client: any) {
+    const clientId = client.id;
+    console.log(`Cliente desconectado: ${clientId}`);
   }
 
   @SubscribeMessage('getAvailableRooms')
@@ -133,24 +133,42 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('startPlay') // TODO => CONTROL DE ERRORES 
+  @SubscribeMessage('startPlay')
   async startPlay(@MessageBody() roomId: string) {
-    const response = await this.roomService.changeRoomState(roomId);
+    try {
+      const response = await this.roomService.changeRoomState(roomId);
 
-    if (!response.success) {
-      return;
+      if (!response.success) {
+        this.server.to(roomId).emit('error', {
+          message: 'No se pudo iniciar la partida. Intenta de nuevo más tarde.',
+        });
+        return;
+      }
+
+      this.sendUpdateRooms();
+
+      const room = await this.roomService.getOneRoom(roomId);
+      this.server.to(roomId).emit('startPlay', room);
+    } catch (error) {
+      console.error('Error al iniciar el juego en la sala:', error.message);
+      this.server.to(roomId).emit('error', {
+        message:
+          'Ocurrió un error al intentar iniciar la partida. Por favor, inténtalo de nuevo más tarde.',
+      });
     }
-
-    this.sendUpdateRooms();
-
-    const room = await this.roomService.getOneRoom(roomId);
-    this.server.to(roomId).emit('startPlay', room);
   }
 
   @SubscribeMessage('updateBoard')
   async updateBoard(@MessageBody() roomInfo: IRoom) {
-    const room = await this.roomService.updateBoard(roomInfo);
-    this.server.to(room.id).emit('updateBoard', room);
+    try {
+      const room = await this.roomService.updateBoard(roomInfo);
+      this.server.to(room.id).emit('updateBoard', room);
+    } catch (error) {
+      console.error('Error al iniciar el juego en la sala:', error.message);
+      this.server.to(roomInfo.id).emit('error', {
+        message: 'Ocurrió un error al actualizar el tablero',
+      });
+    }
   }
 
   async sendUpdateRooms() {
@@ -159,10 +177,6 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // TODO => PASARLAS A UTILS
-  handleDisconnect(client: any) {
-    const clientId = client.id; // ID único del cliente, proporcionado por el WebSocket
-    console.log(`Cliente desconectado: ${clientId}`);
-  }
 
   handlerSalasAndId(roomId, clientId) {
     // Guarda el ID del cliente en la sala

@@ -62,11 +62,10 @@ export class RoomService {
 
   async changeRoomState(roomId: string) {
     try {
-      await changeRoomState(roomId);
-      return { success: true };
+      const result = await changeRoomState(roomId);
+      return result;
     } catch (error) {
       console.error('Error al cambiar el estado de la sala:', error.message);
-      // Devolver un mensaje de error personalizado al cliente
       throw new Error('No se pudo cambiar el estado de la sala');
     }
   }
