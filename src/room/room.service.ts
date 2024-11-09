@@ -77,7 +77,6 @@ export class RoomService {
       }
 
       const room = await changeTurn(roomId);
-
       return getOneRoom(room);
     } catch (error) {
       console.error('Error al cambiar el estado de la sala:', error.message);
@@ -88,11 +87,7 @@ export class RoomService {
 
   async getOneRoom(roomId: string) {
     const room = await getOneRoom(roomId);
-
-    // Convertir el valor 'board' que está almacenado como cadena a un array
-    if (typeof room[0].board === 'string') {
-      room[0].board = JSON.parse(room[0].board); // Convertir de string a array
-    }
-    return room[0];
+    console.log('room => ', room);
+    return room;
   }
 }

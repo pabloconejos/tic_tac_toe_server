@@ -1,7 +1,6 @@
 import { client } from 'src/utils/createClient';
 
 export const updateBoard = async (board: string[], roomId: string) => {
-  console.log(board);
   const query = `
         UPDATE Rooms 
         SET board = ? 

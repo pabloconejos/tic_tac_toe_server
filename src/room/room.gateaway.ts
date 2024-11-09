@@ -140,7 +140,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const room = await this.roomService.updateBoard(boardInfo.board, roomId);
 
-    this.server.to(roomId).emit('updateBoard', room[0]);
+    this.server.to(roomId).emit('updateBoard', room);
   }
 
   async sendUpdateRooms() {
