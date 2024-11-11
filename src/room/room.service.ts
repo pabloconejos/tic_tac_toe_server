@@ -73,8 +73,11 @@ export class RoomService {
   async updateBoard(room: IRoom) {
     try {
       const response = await updateBoard(room.board, room.id);
-      if (checkWinner(room.board, room.turn)) {
-        await setWinner(room.turn, room.id);
+
+      const result = checkWinner(room.board, room.turn);
+
+      if (result.winner) {
+        await setWinner(result.winner, room.id);
       }
       if (!response.succes) {
         throw new Error('No se pudo cambiar el estado del tablero');
