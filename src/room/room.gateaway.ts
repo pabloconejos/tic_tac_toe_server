@@ -23,6 +23,8 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const clientId = client.id;
     client.emit('connectionStatus', { id: clientId });
     this.server.emit('playerConnected', { playerId: clientId });
+    console.log(`Cliente conectado: ${clientId}`);
+
   }
 
   handleDisconnect(client: any) {
