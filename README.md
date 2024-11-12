@@ -1,6 +1,6 @@
 # Tic Tac Toe API
 
-![Logo del proyecto](assets/tictactoe.png)  
+![Logo del proyecto](assets/tictactoeimg.png)  
 
 Esta es la API de un juego online de Tic Tac Toe desarrollada en **NestJS**. La API utiliza **WebSockets** para la comunicación en tiempo real entre los jugadores y está conectada a una base de datos SQL para gestionar las salas de juego.
 
