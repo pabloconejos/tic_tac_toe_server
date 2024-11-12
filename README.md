@@ -1,73 +1,64 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Tic Tac Toe API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+![Logo del proyecto](ruta/a/tu/imagen.png)  
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Esta es la API de un juego online de Tic Tac Toe desarrollada en **NestJS**. La API utiliza **WebSockets** para la comunicación en tiempo real entre los jugadores y está conectada a una base de datos SQL para gestionar las salas de juego.
 
-## Description
+## Requisitos
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Antes de comenzar, asegúrate de tener lo siguiente:
 
-## Installation
+- **Node.js** (versión recomendada: v18 o superior)
+- **Base de datos SQL** (puede ser MySQL o PostgreSQL)
+- **NestJS** instalado globalmente (`npm install -g @nestjs/cli`)
 
-```bash
-$ npm install
-```
+## Instalación
 
-## Running the app
+1. **Clona el repositorio:**
 
-```bash
-# development
-$ npm run start
+   ```bash
+   git clone https://github.com/tuusuario/tic-tac-toe-api.git
+   cd tic-tac-toe-api
+2. **Instala las dependencias:**
 
-# watch mode
-$ npm run start:dev
+   ```bash
+   npm install
+3. **Configura la base de datos:**
+   **Crea la tabla Rooms en tu base de datos SQL con el siguiente script SQL:**
+   ```sql
+   CREATE TABLE Rooms (
+      id TEXT PRIMARY KEY,
+      state TEXT NOT NULL CHECK (state IN ('waiting','in_progress', 'finished')),
+      turn TEXT NOT NULL CHECK (turn IN ('X', 'O')),
+      board TEXT NOT NULL DEFAULT '["", "", "", "", "", "", "", "", ""]',
+      jugador1_id INTEGER,
+      jugador2_id INTEGER,
+      date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      winner TEXT
+    );
+4. **Configura las variables de entorno:**
+   ```bash
+   PORT=3000
+   DATABASE_URL=tu_url_de_conexion_a_la_base_de_datos
+   AUTH_TOKEN=tu_token_de_autenticacion
 
-# production mode
-$ npm run start:prod
-```
+## Uso
 
-## Test
+### Ejecuta la API en modo de desarrollo:
 
-```bash
-# unit tests
-$ npm run test
+    ```bash
+    npm run start:dev
 
-# e2e tests
-$ npm run test:e2e
+### Accede a la API:
+    ```bash
+    http://localhost:3000/
 
-# test coverage
-$ npm run test:cov
-```
+###WebSockets:
+La API utiliza WebSockets para la comunicación en tiempo real entre los jugadores. Para interactuar con los WebSockets, debes conectar tu front-end al WebSocket de la API.
 
-## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
-## License
 
-Nest is [MIT licensed](LICENSE).
+
