@@ -37,24 +37,18 @@ Antes de comenzar, asegúrate de tener lo siguiente:
       winner TEXT
     );
 4. **Configura las variables de entorno:**
-   ```bash
-   PORT=3000
-   DATABASE_URL=tu_url_de_conexion_a_la_base_de_datos
-   AUTH_TOKEN=tu_token_de_autenticacion
+      ```bash
+      PORT=3000
+      DATABASE_URL=tu_url_de_conexion_a_la_base_de_datos
+      AUTH_TOKEN=tu_token_de_autenticacion
 
 ## Uso
 
 ### Ejecuta la API en modo de desarrollo:
 
-    ```bash
-    npm run start:dev
+```bash
+npm run start:dev
 
-### Accede a la API:
-    ```bash
-    http://localhost:3000/
-
-###WebSockets:
-La API utiliza WebSockets para la comunicación en tiempo real entre los jugadores. Para interactuar con los WebSockets, debes conectar tu front-end al WebSocket de la API.
 
 
 
