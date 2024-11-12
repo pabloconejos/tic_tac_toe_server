@@ -42,12 +42,31 @@ Antes de comenzar, asegúrate de tener lo siguiente:
       DATABASE_URL=tu_url_de_conexion_a_la_base_de_datos
       AUTH_TOKEN=tu_token_de_autenticacion
 
+## Cómo Contribuir
+
+¡Gracias por tu interés en contribuir a este proyecto! Aquí te mostramos cómo puedes hacerlo:
+
+### 1. **Fork del Repositorio**
+
+Haz un fork de este repositorio para tener una copia personal en tu cuenta de GitHub.
+
+### 2. **Crea una Rama**
+
+Crea una rama nueva para tus cambios. Asegúrate de nombrar la rama de forma descriptiva (por ejemplo, `feature/nueva-funcionalidad` o `bugfix/correccion-error`).
+
+      ```bash
+      git checkout -b mi-nueva-rama
+
+
 ## Uso
 
 ### Ejecuta la API en modo de desarrollo:
 
 ```bash
 npm run start:dev
+
+
+
 
 
 
