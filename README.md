@@ -54,13 +54,18 @@ Haz un fork de este repositorio para tener una copia personal en tu cuenta de Gi
 
 Crea una rama nueva para tus cambios. Asegúrate de nombrar la rama de forma descriptiva (por ejemplo, `feature/nueva-funcionalidad` o `bugfix/correccion-error`).
 
-      ```bash
-      git checkout -b mi-nueva-rama
+    git checkout -b mi-nueva-rama
 
+### 3. **Realiza los Cambios**
+Haz los cambios necesarios en el código, añade pruebas si es necesario, y asegúrate de que todo funciona correctamente.
 
-## Uso
+### 4. **Realiza un Commit**
+Haz un commit con un mensaje claro que describa los cambios realizados.
 
-### Ejecuta la API en modo de desarrollo:
+    git push origin mi-nueva-rama
 
-```bash
-npm run start:dev
+### 5. **Crea un Pull Request**
+Ve al repositorio original y crea un Pull Request desde tu rama hacia la rama `main` del proyecto.
+
+### 5. **Revisión del Pull Request**
+El equipo del proyecto revisará tu Pull Request. Si todo está en orden, se fusionará con la rama principal. Si es necesario, puedes recibir comentarios y realizar ajustes adicionales.
