@@ -64,14 +64,3 @@ Crea una rama nueva para tus cambios. Asegúrate de nombrar la rama de forma des
 
 ```bash
 npm run start:dev
-
-
-
-
-
-
-
-
-
-
-
